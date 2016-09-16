@@ -1,2 +1,0 @@
-# ProcessamentoParalelo1
-PrimeiroTrabalho
