@@ -158,6 +158,7 @@ begin
       end;
     end;
     CadeiraCabeleireiro.Checked := False;
+    CadeiraCabeleireiro.Caption := 'Cadeira Livre';
   end;
 end;
 

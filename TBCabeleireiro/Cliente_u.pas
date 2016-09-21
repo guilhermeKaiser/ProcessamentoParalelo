@@ -129,8 +129,8 @@ begin
     begin
       Inc(vPrioridade);
       BuscaReservaCadeira(vPrioridade);
-      Application.ProcessMessages;
     end;
+    Application.ProcessMessages;
     Sleep(TempoParaNovoCliente * 1000);
   end;
 end;
