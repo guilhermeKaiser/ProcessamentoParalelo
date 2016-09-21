@@ -5,7 +5,8 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.CheckLst,
-  Vcl.Samples.Spin, Cabeleireiro_u, Cliente_u, System.SyncObjs;
+  Vcl.Samples.Spin, Cabeleireiro_u, Cliente_u, System.SyncObjs, StdCtrls,
+  Spin, Controls, CheckLst, Classes;
 
 type
   TForm1 = class(TForm)
@@ -33,7 +34,7 @@ type
     CS: TCriticalSection;
   public
     { Public declarations }
-    procedure BloquearBotões(Const ABloqueia: Boolean);
+    procedure BloquearBotoes(Const ABloqueia: Boolean);
   end;
 
 var
@@ -43,7 +44,7 @@ implementation
 
 {$R *.dfm}
 
-procedure TForm1.BloquearBotões(const ABloqueia: Boolean);
+procedure TForm1.BloquearBotoes(const ABloqueia: Boolean);
 begin
   SpinQtdCadeiras.Enabled := not ABloqueia;
   SpinTempCorte.Enabled := not ABloqueia;
@@ -55,7 +56,7 @@ procedure TForm1.btnIniciarClick(Sender: TObject);
 var
   i: Integer;
 begin
-  BloquearBotões(True);
+  BloquearBotoes(True);
   cbCadeiraCabeleireiro.Checked := False;
   ListCadeirasClientes.Clear;
 
@@ -84,7 +85,7 @@ begin
     vCabeleireiro.ProgramaExecutando := False;
     vCabeleireiro.ProgramaExecutando := False;
   finally
-    BloquearBotões(False);
+    BloquearBotoes(False);
   end;
 end;
 

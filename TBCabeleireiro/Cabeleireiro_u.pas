@@ -29,8 +29,8 @@ type
     procedure Execute; override;
   public
     constructor Create(const ACreateSuspended: Boolean; const AProgramaExecutando: boolean;
-                       const AFilaClientes: TCheckListBox; const AQuantidadeCadeiras: Integer;
-                       const ACadeiraCabeleireiro: TCheckBox; Const ASecaoCritica: TCriticalSection);
+                       Var AFilaClientes: TCheckListBox; const AQuantidadeCadeiras: Integer;
+                       Var ACadeiraCabeleireiro: TCheckBox; Var ASecaoCritica: TCriticalSection);
     property TempoParaCorte: Integer read FTempoParaCorte write setTempoParaCorte;
     property TempoParaDormir: Integer read FTempoParaDormir write setTempoParaDormir;
     property ProgramaExecutando: Boolean read FProgramaExecutando write setProgramaExecutando;
@@ -80,15 +80,15 @@ function Cabeleireiro.BuscaProximoCliente: Integer;
 var
   i, vMenor, vCadeira: Integer;
 begin
-  vMenor := -1;
+  vMenor := 0;
   vCadeira := -1;
   for i := 0 to QuantidadeCadeiras - 1 do
   begin
     if FilaClientes.Checked[i] then
     begin
-      if (vMenor = -1) or (StrToIntDef(FilaClientes.Items[i], -1) < vMenor) then
+      if (vMenor = 0) or (StrToIntDef(FilaClientes.Items[i], 0) < vMenor) then
       begin
-        vMenor := StrToIntDef(FilaClientes.Items[i], -1);
+        vMenor := StrToIntDef(FilaClientes.Items[i], 0);
         vCadeira := i;
       end;
     end;
@@ -97,9 +97,9 @@ begin
 end;
 
 constructor Cabeleireiro.Create(const ACreateSuspended,
-  AProgramaExecutando: boolean; const AFilaClientes: TCheckListBox;
-  const AQuantidadeCadeiras: Integer; const ACadeiraCabeleireiro: TCheckBox;
-  Const ASecaoCritica: TCriticalSection);
+  AProgramaExecutando: boolean; Var AFilaClientes: TCheckListBox;
+  const AQuantidadeCadeiras: Integer; Var ACadeiraCabeleireiro: TCheckBox;
+  Var ASecaoCritica: TCriticalSection);
 begin
   Self.ProgramaExecutando := AProgramaExecutando;
   Self.FilaClientes := AFilaClientes;
@@ -171,7 +171,7 @@ begin
   vExisteCliente := False;
   for i := 0 to QuantidadeCadeiras - 1 do
   begin
-    if FilaClientes.Items[i] > '-1' then
+    if FilaClientes.Checked[i] then
     begin
       vExisteCliente := True;
       break;
@@ -197,7 +197,7 @@ end;
 
 procedure Cabeleireiro.DesocupaCadeiraCliente(const ANumeroCadeira: Integer);
 begin
-  FilaClientes.Items[ANumeroCadeira] := '-1';
+  FilaClientes.Items[ANumeroCadeira] := '0';
   FilaClientes.Checked[ANumeroCadeira] := False;
   Application.ProcessMessages;
 end;

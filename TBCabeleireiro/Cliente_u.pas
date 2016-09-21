@@ -23,8 +23,8 @@ type
     procedure Execute; override;
   public
     constructor Create(const ACreateSuspended: Boolean; const AProgramaExecutando: boolean;
-                       const AFilaClientes: TCheckListBox; const AQuantidadeCadeiras: Integer;
-                       const ACadeiraCabeleireiro: TCheckBox; Const ASecaoCritica: TCriticalSection);
+                       Var AFilaClientes: TCheckListBox; const AQuantidadeCadeiras: Integer;
+                       Var ACadeiraCabeleireiro: TCheckBox; Var ASecaoCritica: TCriticalSection);
     property TempoParaNovoCliente: Integer read FTempoParaNovoCliente write setTempoParaNovoCliente;
     property ProgramaExecutando: Boolean read FProgramaExecutando write setProgramaExecutando;
   end;
@@ -107,8 +107,8 @@ begin
 end;
 
 constructor Cliente.Create(const ACreateSuspended, AProgramaExecutando: boolean;
-  const AFilaClientes: TCheckListBox; const AQuantidadeCadeiras: Integer;
-  const ACadeiraCabeleireiro: TCheckBox; Const ASecaoCritica: TCriticalSection);
+  Var AFilaClientes: TCheckListBox; const AQuantidadeCadeiras: Integer;
+  Var ACadeiraCabeleireiro: TCheckBox; Var ASecaoCritica: TCriticalSection);
 begin
   Self.ProgramaExecutando := AProgramaExecutando;
   Self.FilaClientes := AFilaClientes;
