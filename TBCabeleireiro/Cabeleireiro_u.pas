@@ -3,16 +3,22 @@ unit Cabeleireiro_u;
 interface
 
 uses
-  System.Classes, Vcl.CheckLst, System.SysUtils, Vcl.StdCtrls;
-
+  System.Classes, Vcl.CheckLst, System.SysUtils, Vcl.StdCtrls, System.SyncObjs, Winapi.Messages,
+  Vcl.Forms;
 type
   Cabeleireiro = class(TThread)
   private
     { Private declarations }
-    ProgramaExecutando: Boolean;
     FilaClientes: TCheckListBox;
     QuantidadeCadeiras: Integer;
     CadeiraCabeleireiro: TCheckBox;
+    SecaoCritica: TCriticalSection;
+    FTempoParaCorte: Integer;
+    FTempoParaDormir: Integer;
+    FProgramaExecutando: Boolean;
+    procedure setTempoParaCorte(const Value: Integer);
+    procedure setTempoParaDormir(const Value: Integer);
+    procedure setProgramaExecutando(const Value: Boolean);
 
     function ExisteClienteEsperando: Boolean;
     function BuscaProximoCliente: Integer;
@@ -24,7 +30,10 @@ type
   public
     constructor Create(const ACreateSuspended: Boolean; const AProgramaExecutando: boolean;
                        const AFilaClientes: TCheckListBox; const AQuantidadeCadeiras: Integer;
-                       const ACadeiraCabeleireiro: TCheckBox);
+                       const ACadeiraCabeleireiro: TCheckBox; Const ASecaoCritica: TCriticalSection);
+    property TempoParaCorte: Integer read FTempoParaCorte write setTempoParaCorte;
+    property TempoParaDormir: Integer read FTempoParaDormir write setTempoParaDormir;
+    property ProgramaExecutando: Boolean read FProgramaExecutando write setProgramaExecutando;
   end;
 
 implementation
@@ -64,7 +73,7 @@ implementation
 
 procedure Cabeleireiro.AtendeCliente;
 begin
-  Sleep(2000);
+  Sleep(TempoParaCorte * 1000);
 end;
 
 function Cabeleireiro.BuscaProximoCliente: Integer;
@@ -89,18 +98,20 @@ end;
 
 constructor Cabeleireiro.Create(const ACreateSuspended,
   AProgramaExecutando: boolean; const AFilaClientes: TCheckListBox;
-  const AQuantidadeCadeiras: Integer; const ACadeiraCabeleireiro: TCheckBox);
+  const AQuantidadeCadeiras: Integer; const ACadeiraCabeleireiro: TCheckBox;
+  Const ASecaoCritica: TCriticalSection);
 begin
   Self.ProgramaExecutando := AProgramaExecutando;
   Self.FilaClientes := AFilaClientes;
   Self.QuantidadeCadeiras := AQuantidadeCadeiras;
   Self.CadeiraCabeleireiro := ACadeiraCabeleireiro;
+  Self.SecaoCritica := ASecaoCritica;
   inherited Create(ACreateSuspended);
 end;
 
 procedure Cabeleireiro.Dormir;
 begin
-  Sleep(4000);
+  Sleep(TempoParaDormir * 1000);
 end;
 
 procedure Cabeleireiro.Execute;
@@ -111,21 +122,45 @@ begin
   begin
     if ExisteClienteEsperando then
     begin
-      CadeiraCabeleireiro.Checked := True;
-      vProximoCliente := BuscaProximoCliente;
-      DesocupaCadeiraCliente(vProximoCliente);
-      AtendeCliente;
+      SecaoCritica.Acquire;
+      try
+        CadeiraCabeleireiro.Checked := True;
+        CadeiraCabeleireiro.Caption := 'Ocupada por Cliente';
+        Application.ProcessMessages;
+
+        vProximoCliente := BuscaProximoCliente;
+        DesocupaCadeiraCliente(vProximoCliente);
+        AtendeCliente;
+      finally
+        SecaoCritica.Release;
+      end;
     end
     else if CadeiraCabeleireiro.Checked then
-      AtendeCliente
+    begin
+      SecaoCritica.Acquire;
+      try
+        AtendeCliente;
+      finally
+        SecaoCritica.Release;
+      end;
+    end
     else
     begin
-      CadeiraCabeleireiro.Checked := True;
-      Dormir;
+      SecaoCritica.Acquire;
+      try
+        CadeiraCabeleireiro.Checked := True;
+        CadeiraCabeleireiro.Caption := 'Ocupada pelo Cabeleireiro';
+        Application.ProcessMessages;
+
+        Dormir;
+      finally
+        SecaoCritica.Release;
+      end;
     end;
     CadeiraCabeleireiro.Checked := False;
   end;
 end;
+
 
 function Cabeleireiro.ExisteClienteEsperando: Boolean;
 var
@@ -144,10 +179,26 @@ begin
   Result := vExisteCliente;
 end;
 
+procedure Cabeleireiro.setProgramaExecutando(const Value: Boolean);
+begin
+  FProgramaExecutando := Value;
+end;
+
+procedure Cabeleireiro.setTempoParaCorte(const Value: Integer);
+begin
+  FTempoParaCorte := Value;
+end;
+
+procedure Cabeleireiro.setTempoParaDormir(const Value: Integer);
+begin
+  FTempoParaDormir := Value;
+end;
+
 procedure Cabeleireiro.DesocupaCadeiraCliente(const ANumeroCadeira: Integer);
 begin
   FilaClientes.Items[ANumeroCadeira] := '-1';
   FilaClientes.Checked[ANumeroCadeira] := False;
+  Application.ProcessMessages;
 end;
 
 end.

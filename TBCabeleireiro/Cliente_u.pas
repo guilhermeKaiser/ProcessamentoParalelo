@@ -3,24 +3,30 @@ unit Cliente_u;
 interface
 
 uses
-  System.Classes, Vcl.CheckLst, System.SysUtils, Vcl.StdCtrls;
+  System.Classes, Vcl.CheckLst, System.SysUtils, Vcl.StdCtrls, System.SyncObjs, Vcl.Forms;
 
 type
   Cliente = class(TThread)
   private
     { Private declarations }
-    ProgramaExecutando: Boolean;
     FilaClientes: TCheckListBox;
     QuantidadeCadeiras: Integer;
     CadeiraCabeleireiro: TCheckBox;
+    SecaoCritica: TCriticalSection;
+    FTempoParaNovoCliente: Integer;
+    FProgramaExecutando: Boolean;
+    procedure setProgramaExecutando(const Value: Boolean);
+    procedure setTempoParaNovoCliente(const Value: Integer);
 
     procedure BuscaReservaCadeira (Const APrioridadeAtendimento: Integer);
   protected
     procedure Execute; override;
   public
-  constructor Create(const ACreateSuspended: Boolean; const AProgramaExecutando: boolean;
+    constructor Create(const ACreateSuspended: Boolean; const AProgramaExecutando: boolean;
                        const AFilaClientes: TCheckListBox; const AQuantidadeCadeiras: Integer;
-                       const ACadeiraCabeleireiro: TCheckBox);
+                       const ACadeiraCabeleireiro: TCheckBox; Const ASecaoCritica: TCriticalSection);
+    property TempoParaNovoCliente: Integer read FTempoParaNovoCliente write setTempoParaNovoCliente;
+    property ProgramaExecutando: Boolean read FProgramaExecutando write setProgramaExecutando;
   end;
 
 implementation
@@ -61,12 +67,20 @@ implementation
 procedure Cliente.BuscaReservaCadeira(const APrioridadeAtendimento: Integer);
 var
   i, vCadeiraVazia: Integer;
+  vAlguemJaEsperando: Boolean;
 begin
-  if not CadeiraCabeleireiro.Checked then
+  vAlguemJaEsperando := False;
+
+  for i := 0 to QuantidadeCadeiras - 1 do
   begin
-    CadeiraCabeleireiro.Checked := True;
-  end
-  else
+    if FilaClientes.Checked[i] then
+    begin
+      vAlguemJaEsperando := True;
+      Break;
+    end;
+  end;
+
+  if (vAlguemJaEsperando) or (CadeiraCabeleireiro.Checked) then
   begin
     vCadeiraVazia := -1;
     for i := 0 to QuantidadeCadeiras - 1 do
@@ -78,17 +92,29 @@ begin
         break;
       end;
     end;
+  end
+  else
+  begin
+    SecaoCritica.Acquire;
+    try
+      CadeiraCabeleireiro.Checked := True;
+      CadeiraCabeleireiro.Caption := 'Ocupada por Cliente';
+    finally
+      SecaoCritica.Release;
+    end;
   end;
+  Application.ProcessMessages;
 end;
 
 constructor Cliente.Create(const ACreateSuspended, AProgramaExecutando: boolean;
   const AFilaClientes: TCheckListBox; const AQuantidadeCadeiras: Integer;
-  const ACadeiraCabeleireiro: TCheckBox);
+  const ACadeiraCabeleireiro: TCheckBox; Const ASecaoCritica: TCriticalSection);
 begin
   Self.ProgramaExecutando := AProgramaExecutando;
   Self.FilaClientes := AFilaClientes;
   Self.QuantidadeCadeiras := AQuantidadeCadeiras;
   Self.CadeiraCabeleireiro := ACadeiraCabeleireiro;
+  Self.SecaoCritica := ASecaoCritica;
   inherited Create(ACreateSuspended);
 end;
 
@@ -103,9 +129,20 @@ begin
     begin
       Inc(vPrioridade);
       BuscaReservaCadeira(vPrioridade);
+      Application.ProcessMessages;
     end;
-    Sleep(1000);
+    Sleep(TempoParaNovoCliente * 1000);
   end;
+end;
+
+procedure Cliente.setProgramaExecutando(const Value: Boolean);
+begin
+  FProgramaExecutando := Value;
+end;
+
+procedure Cliente.setTempoParaNovoCliente(const Value: Integer);
+begin
+  FTempoParaNovoCliente := Value;
 end;
 
 end.
