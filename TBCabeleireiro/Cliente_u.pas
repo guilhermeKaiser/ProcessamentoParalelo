@@ -15,8 +15,10 @@ type
     SecaoCritica: TCriticalSection;
     FTempoParaNovoCliente: Integer;
     FProgramaExecutando: Boolean;
+    FPrioridade: Integer;
     procedure setProgramaExecutando(const Value: Boolean);
     procedure setTempoParaNovoCliente(const Value: Integer);
+    procedure setPrioridade(const Value: Integer);
 
     procedure BuscaReservaCadeira (Const APrioridadeAtendimento: Integer);
   protected
@@ -27,6 +29,7 @@ type
                        Var ACadeiraCabeleireiro: TCheckBox; Var ASecaoCritica: TCriticalSection);
     property TempoParaNovoCliente: Integer read FTempoParaNovoCliente write setTempoParaNovoCliente;
     property ProgramaExecutando: Boolean read FProgramaExecutando write setProgramaExecutando;
+    property Prioridade: Integer read FPrioridade write setPrioridade;
   end;
 
 implementation
@@ -69,6 +72,7 @@ var
   i, vCadeiraVazia: Integer;
   vAlguemJaEsperando: Boolean;
 begin
+  Application.ProcessMessages;
   vAlguemJaEsperando := False;
 
   for i := 0 to QuantidadeCadeiras - 1 do
@@ -89,6 +93,7 @@ begin
       begin
         FilaClientes.Checked[i] := True;
         FilaClientes.Items[i] := IntToStr(APrioridadeAtendimento);
+        Application.ProcessMessages;
         break;
       end;
     end;
@@ -99,11 +104,12 @@ begin
     try
       CadeiraCabeleireiro.Checked := True;
       CadeiraCabeleireiro.Caption := 'Ocupada por Cliente';
+      Application.ProcessMessages;
     finally
       SecaoCritica.Release;
     end;
   end;
-  Application.ProcessMessages;
+//  Application.ProcessMessages;
 end;
 
 constructor Cliente.Create(const ACreateSuspended, AProgramaExecutando: boolean;
@@ -120,19 +126,24 @@ end;
 
 procedure Cliente.Execute;
 var
-  vPrioridade, vCadeiraVazia: Integer;
+  vCadeiraVazia: Integer;
 begin
-  vPrioridade := 1;
   while ProgramaExecutando do
   begin
     if (Random(1) + 1) = 1 then
     begin
-      Inc(vPrioridade);
-      BuscaReservaCadeira(vPrioridade);
+      Self.FPrioridade := Prioridade + 1;
+      BuscaReservaCadeira(Prioridade);
+      Application.ProcessMessages;
     end;
     Application.ProcessMessages;
     Sleep(TempoParaNovoCliente * 1000);
   end;
+end;
+
+procedure Cliente.setPrioridade(const Value: Integer);
+begin
+  FPrioridade := Value;
 end;
 
 procedure Cliente.setProgramaExecutando(const Value: Boolean);

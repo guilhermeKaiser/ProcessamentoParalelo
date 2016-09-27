@@ -25,6 +25,7 @@ type
     procedure DesocupaCadeiraCliente(Const ANumeroCadeira: Integer);
     procedure AtendeCliente;
     procedure Dormir;
+    procedure AtualizaStatusCadeiraCabeleireiro(Const AStatus: String; Const AMarcado: Boolean);
   protected
     procedure Execute; override;
   public
@@ -76,6 +77,14 @@ begin
   Sleep(TempoParaCorte * 1000);
 end;
 
+procedure Cabeleireiro.AtualizaStatusCadeiraCabeleireiro(const AStatus: String;
+  const AMarcado: Boolean);
+begin
+  CadeiraCabeleireiro.Checked := AMarcado;
+  CadeiraCabeleireiro.Caption := AStatus;
+//  Application.ProcessMessages;
+end;
+
 function Cabeleireiro.BuscaProximoCliente: Integer;
 var
   i, vMenor, vCadeira: Integer;
@@ -124,9 +133,9 @@ begin
     begin
       SecaoCritica.Acquire;
       try
+//        AtualizaStatusCadeiraCabeleireiro('Ocupada por Cliente', True);
         CadeiraCabeleireiro.Checked := True;
         CadeiraCabeleireiro.Caption := 'Ocupada por Cliente';
-        Application.ProcessMessages;
 
         vProximoCliente := BuscaProximoCliente;
         DesocupaCadeiraCliente(vProximoCliente);
@@ -148,15 +157,17 @@ begin
     begin
       SecaoCritica.Acquire;
       try
+//        AtualizaStatusCadeiraCabeleireiro('Ocupada pelo Cabeleireiro', True);
         CadeiraCabeleireiro.Checked := True;
         CadeiraCabeleireiro.Caption := 'Ocupada pelo Cabeleireiro';
-        Application.ProcessMessages;
+//        Application.ProcessMessages;
 
         Dormir;
       finally
         SecaoCritica.Release;
       end;
     end;
+//    AtualizaStatusCadeiraCabeleireiro('Cadeira Livre', False);
     CadeiraCabeleireiro.Checked := False;
     CadeiraCabeleireiro.Caption := 'Cadeira Livre';
   end;

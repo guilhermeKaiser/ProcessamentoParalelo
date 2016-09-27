@@ -5,8 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.CheckLst,
-  Vcl.Samples.Spin, Cabeleireiro_u, Cliente_u, System.SyncObjs, StdCtrls,
-  Spin, Controls, CheckLst, Classes;
+  Vcl.Samples.Spin, Cabeleireiro_u, Cliente_u, System.SyncObjs;
 
 type
   TForm1 = class(TForm)
@@ -58,32 +57,43 @@ var
 begin
   BloquearBotoes(True);
   cbCadeiraCabeleireiro.Checked := False;
+  cbCadeiraCabeleireiro.Caption := 'Cadeira Livre';
   ListCadeirasClientes.Clear;
 
   QuantidadeCadeiras := SpinQtdCadeiras.Value;
-
   for i := 0 to QuantidadeCadeiras - 1 do
   begin
-    ListCadeirasClientes.AddItem('-1', ListCadeirasClientes);
+    ListCadeirasClientes.AddItem('0', ListCadeirasClientes);
     ListCadeirasClientes.Checked[i] := False;
   end;
 
-  vCabeleireiro := Cabeleireiro.Create(True, True, ListCadeirasClientes, QuantidadeCadeiras, cbCadeiraCabeleireiro, CS);
+//  if vCabeleireiro = nil then
+    vCabeleireiro := Cabeleireiro.Create(True, True, ListCadeirasClientes,
+                                         QuantidadeCadeiras, cbCadeiraCabeleireiro, CS);
+
   vCabeleireiro.TempoParaCorte := SpinTempCorte.Value;
   vCabeleireiro.TempoParaDormir := SpinTempDormir.Value;
 
-  vCliente := Cliente.Create(True, True, ListCadeirasClientes, QuantidadeCadeiras, cbCadeiraCabeleireiro, CS);
-  vCliente.TempoParaNovoCliente := SpinTempNovoCliente.Value;
+//  if vCliente = nil then
+    vCliente := Cliente.Create(True, True, ListCadeirasClientes, QuantidadeCadeiras, cbCadeiraCabeleireiro, CS);
 
-  vCabeleireiro.Resume;
-  vCliente.Resume;
+  vCliente.TempoParaNovoCliente := SpinTempNovoCliente.Value;
+  vCliente.Prioridade := 1;
+
+
+  vCabeleireiro.ProgramaExecutando := True;
+  vCabeleireiro.ProgramaExecutando := True;
+  vCabeleireiro.Start;
+  vCliente.Start;
 end;
 
 procedure TForm1.btnPararClick(Sender: TObject);
 begin
   try
     vCabeleireiro.ProgramaExecutando := False;
-    vCabeleireiro.ProgramaExecutando := False;
+    vCabeleireiro.Terminate;
+    vCliente.ProgramaExecutando := False;
+    vCliente.Terminate;
   finally
     BloquearBotoes(False);
   end;
