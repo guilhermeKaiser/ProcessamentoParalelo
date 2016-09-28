@@ -122,6 +122,7 @@ object Form1: TForm1
     Width = 75
     Height = 25
     Caption = 'Parar'
+    Enabled = False
     TabOrder = 7
     OnClick = btnPararClick
   end

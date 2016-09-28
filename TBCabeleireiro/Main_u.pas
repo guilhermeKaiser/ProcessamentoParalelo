@@ -49,6 +49,8 @@ begin
   SpinTempCorte.Enabled := not ABloqueia;
   SpinTempDormir.Enabled := not ABloqueia;
   SpinTempNovoCliente.Enabled := not ABloqueia;
+  btnIniciar.Enabled := not ABloqueia;
+  btnParar.Enabled := ABloqueia;
 end;
 
 procedure TForm1.btnIniciarClick(Sender: TObject);
@@ -67,24 +69,20 @@ begin
     ListCadeirasClientes.Checked[i] := False;
   end;
 
-//  if vCabeleireiro = nil then
-    vCabeleireiro := Cabeleireiro.Create(True, True, ListCadeirasClientes,
-                                         QuantidadeCadeiras, cbCadeiraCabeleireiro, CS);
-
+  vCabeleireiro := Cabeleireiro.Create(True, True, ListCadeirasClientes,
+                                       QuantidadeCadeiras, cbCadeiraCabeleireiro, CS);
   vCabeleireiro.TempoParaCorte := SpinTempCorte.Value;
   vCabeleireiro.TempoParaDormir := SpinTempDormir.Value;
 
-//  if vCliente = nil then
-    vCliente := Cliente.Create(True, True, ListCadeirasClientes, QuantidadeCadeiras, cbCadeiraCabeleireiro, CS);
-
+  vCliente := Cliente.Create(True, True, ListCadeirasClientes,
+                             QuantidadeCadeiras, cbCadeiraCabeleireiro, CS);
   vCliente.TempoParaNovoCliente := SpinTempNovoCliente.Value;
   vCliente.Prioridade := 1;
 
-
   vCabeleireiro.ProgramaExecutando := True;
   vCabeleireiro.ProgramaExecutando := True;
-  vCabeleireiro.Start;
   vCliente.Start;
+  vCabeleireiro.Start;
 end;
 
 procedure TForm1.btnPararClick(Sender: TObject);

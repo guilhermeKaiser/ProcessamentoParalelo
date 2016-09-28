@@ -8,7 +8,6 @@ uses
 type
   Cabeleireiro = class(TThread)
   private
-    { Private declarations }
     FilaClientes: TCheckListBox;
     QuantidadeCadeiras: Integer;
     CadeiraCabeleireiro: TCheckBox;
@@ -20,12 +19,12 @@ type
     procedure setTempoParaDormir(const Value: Integer);
     procedure setProgramaExecutando(const Value: Boolean);
 
+    procedure AtualizaStatus;
     function ExisteClienteEsperando: Boolean;
     function BuscaProximoCliente: Integer;
-    procedure DesocupaCadeiraCliente(Const ANumeroCadeira: Integer);
-    procedure AtendeCliente;
+    procedure DesocuparCadeiraCliente(Const ANumeroCadeira: Integer);
+    procedure AtenderCliente;
     procedure Dormir;
-    procedure AtualizaStatusCadeiraCabeleireiro(Const AStatus: String; Const AMarcado: Boolean);
   protected
     procedure Execute; override;
   public
@@ -72,17 +71,15 @@ implementation
 
 { Cabeleireiro }
 
-procedure Cabeleireiro.AtendeCliente;
+procedure Cabeleireiro.AtenderCliente;
 begin
   Sleep(TempoParaCorte * 1000);
 end;
 
-procedure Cabeleireiro.AtualizaStatusCadeiraCabeleireiro(const AStatus: String;
-  const AMarcado: Boolean);
+procedure Cabeleireiro.AtualizaStatus;
 begin
-  CadeiraCabeleireiro.Checked := AMarcado;
-  CadeiraCabeleireiro.Caption := AStatus;
-//  Application.ProcessMessages;
+  FilaClientes.Update;
+  CadeiraCabeleireiro.Update;
 end;
 
 function Cabeleireiro.BuscaProximoCliente: Integer;
@@ -129,47 +126,41 @@ var
 begin
   while ProgramaExecutando do
   begin
+    AtualizaStatus;
     if ExisteClienteEsperando then
     begin
       SecaoCritica.Acquire;
       try
-//        AtualizaStatusCadeiraCabeleireiro('Ocupada por Cliente', True);
         CadeiraCabeleireiro.Checked := True;
         CadeiraCabeleireiro.Caption := 'Ocupada por Cliente';
 
         vProximoCliente := BuscaProximoCliente;
-        DesocupaCadeiraCliente(vProximoCliente);
-        AtendeCliente;
+        DesocuparCadeiraCliente(vProximoCliente);
       finally
         SecaoCritica.Release;
       end;
+      AtenderCliente;
     end
     else if CadeiraCabeleireiro.Checked then
     begin
-      SecaoCritica.Acquire;
-      try
-        AtendeCliente;
-      finally
-        SecaoCritica.Release;
-      end;
+      AtenderCliente;
     end
     else
     begin
       SecaoCritica.Acquire;
       try
-//        AtualizaStatusCadeiraCabeleireiro('Ocupada pelo Cabeleireiro', True);
         CadeiraCabeleireiro.Checked := True;
         CadeiraCabeleireiro.Caption := 'Ocupada pelo Cabeleireiro';
-//        Application.ProcessMessages;
-
-        Dormir;
       finally
         SecaoCritica.Release;
       end;
+
+      Dormir;
     end;
-//    AtualizaStatusCadeiraCabeleireiro('Cadeira Livre', False);
+
     CadeiraCabeleireiro.Checked := False;
     CadeiraCabeleireiro.Caption := 'Cadeira Livre';
+    AtualizaStatus;
   end;
 end;
 
@@ -206,11 +197,10 @@ begin
   FTempoParaDormir := Value;
 end;
 
-procedure Cabeleireiro.DesocupaCadeiraCliente(const ANumeroCadeira: Integer);
+procedure Cabeleireiro.DesocuparCadeiraCliente(const ANumeroCadeira: Integer);
 begin
   FilaClientes.Items[ANumeroCadeira] := '0';
   FilaClientes.Checked[ANumeroCadeira] := False;
-  Application.ProcessMessages;
 end;
 
 end.

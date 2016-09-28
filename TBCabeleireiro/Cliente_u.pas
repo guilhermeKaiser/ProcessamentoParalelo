@@ -20,6 +20,7 @@ type
     procedure setTempoParaNovoCliente(const Value: Integer);
     procedure setPrioridade(const Value: Integer);
 
+    procedure AtualizaStatus;
     procedure BuscaReservaCadeira (Const APrioridadeAtendimento: Integer);
   protected
     procedure Execute; override;
@@ -67,6 +68,12 @@ implementation
 
 { Cliente }
 
+procedure Cliente.AtualizaStatus;
+begin
+  FilaClientes.Update;
+  CadeiraCabeleireiro.Update;
+end;
+
 procedure Cliente.BuscaReservaCadeira(const APrioridadeAtendimento: Integer);
 var
   i, vCadeiraVazia: Integer;
@@ -93,7 +100,7 @@ begin
       begin
         FilaClientes.Checked[i] := True;
         FilaClientes.Items[i] := IntToStr(APrioridadeAtendimento);
-        Application.ProcessMessages;
+        AtualizaStatus;
         break;
       end;
     end;
@@ -104,12 +111,11 @@ begin
     try
       CadeiraCabeleireiro.Checked := True;
       CadeiraCabeleireiro.Caption := 'Ocupada por Cliente';
-      Application.ProcessMessages;
+      Synchronize(AtualizaStatus);
     finally
       SecaoCritica.Release;
     end;
   end;
-//  Application.ProcessMessages;
 end;
 
 constructor Cliente.Create(const ACreateSuspended, AProgramaExecutando: boolean;
@@ -130,13 +136,13 @@ var
 begin
   while ProgramaExecutando do
   begin
+    AtualizaStatus;
     if (Random(1) + 1) = 1 then
     begin
       Self.FPrioridade := Prioridade + 1;
       BuscaReservaCadeira(Prioridade);
-      Application.ProcessMessages;
     end;
-    Application.ProcessMessages;
+    AtualizaStatus;
     Sleep(TempoParaNovoCliente * 1000);
   end;
 end;
