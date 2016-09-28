@@ -105,14 +105,19 @@ begin
 
         vProximoCliente := BuscaProximoCliente;
         DesocuparCadeiraCliente(vProximoCliente);
+        AtenderCliente;
       finally
         SecaoCritica.Release;
       end;
-      AtenderCliente;
     end
     else if CadeiraCabeleireiro.Checked then
     begin
-      AtenderCliente;
+      SecaoCritica.Acquire;
+      try
+        AtenderCliente;
+      finally
+        SecaoCritica.Release;
+      end;
     end
     else
     begin
@@ -124,7 +129,27 @@ begin
         SecaoCritica.Release;
       end;
 
-      Dormir;
+      //Caso o caption não seja o que foi tentado setar a cima, significa que alguém estava usando a seção crítica
+      //e por isso não foi possível acessá-la, neste caso se não estiver Ocupada pelo Cabeleireiro estará
+      //sendo ocupada por Cliente, assim sendo atende o mesmo, senão o cabeleireiro irá Dormir
+      if CadeiraCabeleireiro.Caption <> 'Ocupada pelo Cabeleireiro' then
+      begin
+        SecaoCritica.Acquire;
+        try
+          AtenderCliente;
+        finally
+          SecaoCritica.Release;
+        end;
+      end
+      else
+      begin
+        SecaoCritica.Acquire;
+        try
+          Dormir;
+        finally
+          SecaoCritica.Release;
+        end;
+      end;
     end;
 
     CadeiraCabeleireiro.Checked := False;

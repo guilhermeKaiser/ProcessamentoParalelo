@@ -21,7 +21,7 @@ type
     procedure setPrioridade(const Value: Integer);
 
     procedure AtualizaStatus;
-    procedure BuscaReservaCadeira (Const APrioridadeAtendimento: Integer);
+    procedure BuscaReservaCadeira(Const APrioridadeAtendimento: Integer; Const AVaiDiretoFilaEspera: Boolean);
   protected
     procedure Execute; override;
   public
@@ -43,7 +43,7 @@ begin
   CadeiraCabeleireiro.Update;
 end;
 
-procedure Cliente.BuscaReservaCadeira(const APrioridadeAtendimento: Integer);
+procedure Cliente.BuscaReservaCadeira(const APrioridadeAtendimento: Integer; Const AVaiDiretoFilaEspera: Boolean);
 var
   i, vCadeiraVazia: Integer;
   vAlguemJaEsperando: Boolean;
@@ -51,16 +51,17 @@ begin
   Application.ProcessMessages;
   vAlguemJaEsperando := False;
 
-  for i := 0 to QuantidadeCadeiras - 1 do
-  begin
-    if FilaClientes.Checked[i] then
+  if not AVaiDiretoFilaEspera then
+    for i := 0 to QuantidadeCadeiras - 1 do
     begin
-      vAlguemJaEsperando := True;
-      Break;
+      if FilaClientes.Checked[i] then
+      begin
+        vAlguemJaEsperando := True;
+        Break;
+      end;
     end;
-  end;
 
-  if (vAlguemJaEsperando) or (CadeiraCabeleireiro.Checked) then
+  if (vAlguemJaEsperando) or (CadeiraCabeleireiro.Checked) or (AVaiDiretoFilaEspera) then
   begin
     vCadeiraVazia := -1;
     for i := 0 to QuantidadeCadeiras - 1 do
@@ -83,6 +84,14 @@ begin
       Synchronize(AtualizaStatus);
     finally
       SecaoCritica.Release;
+    end;
+
+    //Caso o caption não seja o que foi tentado setar a cima, significa que alguém estava usando a seção crítica
+    //e por isso não foi possível usá-la, com isso chama-se  a função BuscaReservaCadeira que agora irá mandar
+    // o cliente direto para a Fila de espera
+    if CadeiraCabeleireiro.Caption <> 'Ocupada por Cliente' then
+    begin
+      BuscaReservaCadeira(APrioridadeAtendimento, True);
     end;
   end;
 end;
@@ -109,7 +118,7 @@ begin
     if (Random(1) + 1) = 1 then
     begin
       Self.FPrioridade := Prioridade + 1;
-      BuscaReservaCadeira(Prioridade);
+      BuscaReservaCadeira(Prioridade, False);
     end;
     AtualizaStatus;
     Sleep(TempoParaNovoCliente * 1000);
