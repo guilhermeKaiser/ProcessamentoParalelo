@@ -60,9 +60,9 @@ begin
   BloquearBotoes(True);
   cbCadeiraCabeleireiro.Checked := False;
   cbCadeiraCabeleireiro.Caption := 'Cadeira Livre';
-  ListCadeirasClientes.Clear;
 
   QuantidadeCadeiras := SpinQtdCadeiras.Value;
+  ListCadeirasClientes.Clear;
   for i := 0 to QuantidadeCadeiras - 1 do
   begin
     ListCadeirasClientes.AddItem('0', ListCadeirasClientes);
@@ -77,10 +77,8 @@ begin
   vCliente := Cliente.Create(True, True, ListCadeirasClientes,
                              QuantidadeCadeiras, cbCadeiraCabeleireiro, CS);
   vCliente.TempoParaNovoCliente := SpinTempNovoCliente.Value;
-  vCliente.Prioridade := 1;
+  vCliente.Prioridade := 0;
 
-  vCabeleireiro.ProgramaExecutando := True;
-  vCabeleireiro.ProgramaExecutando := True;
   vCliente.Start;
   vCabeleireiro.Start;
 end;

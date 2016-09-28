@@ -82,7 +82,7 @@ object Form1: TForm1
     Top = 119
     Width = 160
     Height = 17
-    Caption = 'Cadeira Cabeleireiro'
+    Caption = 'Cadeira Livre'
     Enabled = False
     TabOrder = 3
   end
